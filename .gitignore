@@ -1,0 +1,18 @@
+
+# Compiled executables
+/watchdog
+/worker
+
+# Object files
+*.o
+
+# Generated logs
+*.log
+
+# Editor temporary files
+*~
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db

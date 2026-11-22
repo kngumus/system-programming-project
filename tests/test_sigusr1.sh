@@ -6,6 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 OUTPUT=$(mktemp)
+LOG_FILE="watchdog.log"
 WATCHDOG_PID=""
 
 cleanup() {
@@ -19,6 +20,9 @@ trap cleanup EXIT
 
 echo "Running Test 4: SIGUSR1 Status Report..."
 
+# Remove previous log entries so this test checks only fresh data.
+rm -f "$LOG_FILE"
+
 ./watchdog > "$OUTPUT" 2>&1 &
 WATCHDOG_PID=$!
 
@@ -30,21 +34,35 @@ if ! kill -0 "$WATCHDOG_PID" 2>/dev/null; then
     exit 1
 fi
 
-# Request worker status information
+# Request worker status information.
 kill -USR1 "$WATCHDOG_PID"
 
 sleep 1
 
+# Verify terminal output.
+if ! grep -q -- "--- Worker Status ---" "$OUTPUT" ||
+   ! grep -Eq "Worker 1: PID [0-9]+, RUNNING, Restarts: 0/3" "$OUTPUT" ||
+   ! grep -Eq "Worker 2: PID [0-9]+, RUNNING, Restarts: 0/3" "$OUTPUT"; then
 
-# Verify the status report contains both workers
-if grep -q -- "--- Worker Status ---" "$OUTPUT" &&
-   grep -Eq "Worker 1: PID [0-9]+, RUNNING, Restarts: 0/3" "$OUTPUT" &&
-   grep -Eq "Worker 2: PID [0-9]+, RUNNING, Restarts: 0/3" "$OUTPUT"; then
-
-    echo "PASS: SIGUSR1 status report generated correctly"
-
-else
-    echo "FAIL: SIGUSR1 status report is missing or incorrect"
+    echo "FAIL: SIGUSR1 terminal status report is incorrect"
     cat "$OUTPUT"
     exit 1
 fi
+
+# Verify log file exists.
+if [[ ! -f "$LOG_FILE" ]]; then
+    echo "FAIL: watchdog.log was not created"
+    exit 1
+fi
+
+# Verify the SIGUSR1 request and both worker statuses are logged.
+if ! grep -q "Worker status report requested" "$LOG_FILE" ||
+   ! grep -Eq "Worker 1: PID [0-9]+, RUNNING, Restarts: 0/3" "$LOG_FILE" ||
+   ! grep -Eq "Worker 2: PID [0-9]+, RUNNING, Restarts: 0/3" "$LOG_FILE"; then
+
+    echo "FAIL: SIGUSR1 status report is missing from watchdog.log"
+    cat "$LOG_FILE"
+    exit 1
+fi
+
+echo "PASS: SIGUSR1 status report verified in terminal and log file"

@@ -217,10 +217,13 @@ void check_children(void)
 
 
 
-/* Display the current status of all workers */
+
+/* Display and log the current status of all workers */
 void print_worker_status(void)
 {
     printf("\n--- Worker Status ---\n");
+
+    logger_log(LOG_INFO, "Worker status report requested");
 
     for (int i = 0; i < WORKER_COUNT; i++) {
         if (workers[i].running) {
@@ -230,6 +233,13 @@ void print_worker_status(void)
                    (long)workers[i].pid,
                    workers[i].restart_count,
                    MAX_RESTARTS);
+
+            logger_log(LOG_INFO,
+                       "Worker %d: PID %ld, RUNNING, Restarts: %d/%d",
+                       i + 1,
+                       (long)workers[i].pid,
+                       workers[i].restart_count,
+                       MAX_RESTARTS);
         }
         else {
             printf("Worker %d: NOT RUNNING, "
@@ -237,12 +247,19 @@ void print_worker_status(void)
                    i + 1,
                    workers[i].restart_count,
                    MAX_RESTARTS);
+
+            logger_log(LOG_INFO,
+                       "Worker %d: NOT RUNNING, Restarts: %d/%d",
+                       i + 1,
+                       workers[i].restart_count,
+                       MAX_RESTARTS);
         }
     }
 
     printf("---------------------\n\n");
     fflush(stdout);
 }
+
 
 
 

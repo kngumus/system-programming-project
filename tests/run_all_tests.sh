@@ -23,6 +23,7 @@ TESTS=(
     test_sigusr1.sh
     test_shutdown.sh
     test_periodic.sh
+    test_normal_exit.sh
 )
 
 for TEST in "${TESTS[@]}"; do

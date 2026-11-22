@@ -37,6 +37,7 @@ system-programming-project/
 │   ├── test_sigusr1.sh
 │   ├── test_shutdown.sh
 │   ├── test_periodic.sh
+│   ├── test_normal_exit.sh
 │   └── test_logging_restart_limit.sh
 ├── Makefile
 └── README.md
@@ -155,6 +156,7 @@ The suite verifies:
 4. SIGUSR1 status reporting
 5. Graceful shutdown
 6. Periodic SIGALRM monitoring
+7. Normal child termination without automatic restart
 
 The logging restart-limit test can also be executed separately:
 
@@ -167,10 +169,10 @@ bash tests/test_logging_restart_limit.sh
 The integrated project was compiled and tested successfully on Ubuntu.
 
 ```text
-Passed:  6
+Passed:  7
 Failed:  0
 Skipped: 0
-Total:   6
+Total:   7
 
 ALL TESTS PASSED!
 ```

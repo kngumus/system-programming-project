@@ -6,24 +6,41 @@
 
 #include "signal_manager.h"
 #include "process_manager.h"
+#include "logger.h"
 
 int main(void)
 {
+
+    if (logger_init("watchdog.log") == -1) {
+        fprintf(stderr, "Logger initialization failed.\n");
+        return EXIT_FAILURE;
+    }
+
+    logger_log(LOG_INFO, "Watchdog started (PID: %ld)",
+            (long)getpid());
+
     printf("Watchdog started. Parent PID: %ld\n",
            (long)getpid());
-
-    /* Install signal handlers */
+    
+           /* Install signal handlers */
     if (setup_signal_handlers() == -1) {
         perror("sigaction");
+        logger_log(LOG_ERROR, "Failed to install signal handlers");
+        logger_close();
         return EXIT_FAILURE;
     }
 
+
     /* Create the initial workers */
+    
     if (start_all_workers() == -1) {
+        logger_log(LOG_ERROR, "Failed to start all workers");
         shutdown_requested = 1;
         shutdown_workers();
+        logger_close();
         return EXIT_FAILURE;
     }
+
 
     /* Main monitoring loop */
     while (!shutdown_requested) {
@@ -51,7 +68,14 @@ int main(void)
     }
 
     /* Stop workers without restarting them */
+    
+    logger_log(LOG_INFO, "Watchdog shutdown initiated");
+
     shutdown_workers();
 
+    logger_log(LOG_INFO, "Watchdog shutdown completed");
+    logger_close();
+
     return EXIT_SUCCESS;
+    ;
 }
